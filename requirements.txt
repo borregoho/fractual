@@ -1,0 +1,4 @@
+argparse-dataclass
+colorama
+pyfiglet
+termcolor
