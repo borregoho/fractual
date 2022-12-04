@@ -161,7 +161,6 @@ class Repl:
                     answer_raw = input("Tu respuesta [{numerador} / {denominador}]:")
                     num, den = [int(x.strip()) for x in answer_raw.strip().split('/', 2)]
                     answer = Fraction(num, den)
-                    cprint("¡EMPINGATION!", 'grey', 'on_green')
                     break
                 except ValueError as exc:
                     print(str(exc))
@@ -169,6 +168,7 @@ class Repl:
 
             if abs(answer.value - challenge.value) < 1e-4:
                 # success
+                cprint("¡EMPINGATION!", 'grey', 'on_green')
                 break
             # error
             cprint("¡Respuesta incorrecta!", 'white', 'on_red')
