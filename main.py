@@ -104,11 +104,9 @@ class Challenger:
         return 10 * self.level
 
     def rand_numerator(self) -> int:
-        return 1
         return random.randint(-self.max_value, self.max_value)
 
     def rand_denominator(self) -> int:
-        return 1
         return random.randint(1, self.max_value)
 
     def rand_fraction(self) -> Fraction:
@@ -136,6 +134,10 @@ class Repl:
     def __post_init__(self):
         self.challenger = Challenger(level=self.args.level)
 
+    @property
+    def success_rate(self):
+        return self.successful_challenges / self.presented_challenges if self.presented_challenges > 0 else math.nan
+
     def present_challenge(self) -> int:
         """
         Presents challenge
@@ -143,7 +145,9 @@ class Repl:
         """
         challenge = self.challenger.challenge()
         print()
-        cprint(f"Nivel: {self.challenger.level} | Puntuación: {self.points}", 'blue')
+        cprint(
+            f"Nivel: {self.challenger.level} | Puntuación: {self.points} | Efectividad: {self.success_rate * 100.0:0.0f}%",
+            'magenta')
         print()
         print("Calcula:\n")
         print(challenge)
@@ -157,6 +161,7 @@ class Repl:
                     answer_raw = input("Tu respuesta [{numerador} / {denominador}]:")
                     num, den = [int(x.strip()) for x in answer_raw.strip().split('/', 2)]
                     answer = Fraction(num, den)
+                    cprint("¡EMPINGATION!", 'grey', 'on_green')
                     break
                 except ValueError as exc:
                     print(str(exc))
