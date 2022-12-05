@@ -1,3 +1,4 @@
+import itertools
 import math
 import random
 import sys
@@ -74,22 +75,29 @@ class Solution:
         num2 = int(f2.numerator * den / f2.denominator)
         return Challenge(Fraction(num1, den), Fraction(num2, den))
 
-    def explain(self) -> Tuple[Challenge, Fraction]:
+    def explain(self) -> Tuple[Challenge, Fraction, Fraction]:
         sol = self.normalize()
         f1, f2 = sol.term1, sol.term2
         assert f1.denominator == f2.denominator
         den = f1.denominator
         num = f1.numerator + f2.numerator
+        raw_fraction = Fraction(num, den)
         gcd = math.gcd(num, den)
         num /= gcd
         den /= gcd
-        return sol, Fraction(int(num), int(den))
+        return sol, raw_fraction, Fraction(int(num), int(den))
+
+    def answer(self) -> Fraction:
+        return self.explain()[-1]
 
     def format_lines(self):
-        sol, res = self.explain()
+        chain = [x.format_lines() for x in self.explain()]
         equals = "  =  "
         padding = " " * len(equals)
-        return ["".join(x) for x in zip(sol.format_lines(), [padding, equals, padding], res.format_lines())]
+        eq_block = [padding, equals, padding]
+        line_blocks = [self.challenge.format_lines()] + [x for pair in itertools.zip_longest([], chain,fillvalue=eq_block) for x in
+                                                         pair]
+        return ["".join(x) for x in zip(*line_blocks)]
 
     def __str__(self):
         return "\n".join(self.format_lines())
@@ -101,7 +109,7 @@ class Challenger:
 
     @property
     def max_value(self) -> int:
-        return 10 * self.level
+        return 10 * self.level if self.level > 0 else 1
 
     def rand_numerator(self) -> int:
         return random.randint(-self.max_value, self.max_value)
@@ -121,7 +129,7 @@ class MainEntryPointArgs:
     """
     This is a simple fraction addition game
     """
-    level: int = 1
+    level: int = 2
 
 
 @dataclass
@@ -143,14 +151,21 @@ class Repl:
         Presents challenge
         :return: Accumulated points: positive on success, 0 on failure
         """
+        print()
+        cprint("-" * 60, 'magenta')
+        cprint(
+            f"  Nivel: {self.challenger.level} | "
+            f"Puntuación: {self.points} | "
+            f"Efectividad: {self.success_rate * 100.0:0.0f}%",
+            'magenta')
+        cprint("-" * 60, 'magenta')
+        input("Presiona ENTER para continuar...")
         challenge = self.challenger.challenge()
         print()
-        cprint(
-            f"Nivel: {self.challenger.level} | Puntuación: {self.points} | Efectividad: {self.success_rate * 100.0:0.0f}%",
-            'magenta')
-        print()
         print("Calcula:\n")
+        print()
         print(challenge)
+        print()
         attempts = 3
         sol = Solution(challenge)
         while attempts:
@@ -168,13 +183,18 @@ class Repl:
 
             if abs(answer.value - challenge.value) < 1e-4:
                 # success
-                cprint("¡EMPINGATION!", 'grey', 'on_green')
-                break
-            # error
-            cprint("¡Respuesta incorrecta!", 'white', 'on_red')
-            attempts -= 1
+                if sol.answer() == answer:
+                    cprint("¡EMPINGATION!", 'grey', 'on_green')
+                    break
+                else:
+                    cprint("Respuesta correcta pero podría simplificarse", 'grey', 'on_yellow')
+            else:
+                # error
+                cprint("¡Respuesta incorrecta!", 'white', 'on_red')
+                attempts -= 1
         else:
             print("Intentos agotados. Solución:")
+            print()
             print(sol)
         return [0, 1, 5, 10][attempts]
 
